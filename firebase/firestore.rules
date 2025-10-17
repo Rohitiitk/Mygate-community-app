@@ -1,0 +1,123 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && 
+             request.auth.token.roles != null && 
+             role in request.auth.token.roles;
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isGuard() {
+      return hasRole('guard');
+    }
+    
+    function isResident() {
+      return hasRole('resident');
+    }
+    
+    function getUserHousehold() {
+      return request.auth.token.householdId;
+    }
+    
+    function belongsToUserHousehold(householdId) {
+      return isAuthenticated() && getUserHousehold() == householdId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Admins can read all users
+      allow read: if isAdmin();
+      
+      // Users can update their own profile (limited fields)
+      allow update: if isAuthenticated() && 
+                      request.auth.uid == userId &&
+                      !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['roles', 'householdId']);
+      
+      // Only admins can create users or modify roles
+      allow create, delete: if isAdmin();
+    }
+    
+    // Households collection
+    match /households/{householdId} {
+      // Members can read their household
+      allow read: if isAuthenticated() && belongsToUserHousehold(householdId);
+      
+      // Admins can read all households
+      allow read: if isAdmin();
+      
+      // Only admins can create/update/delete households
+      allow write: if isAdmin();
+    }
+    
+    // Visitors collection
+    match /visitors/{visitorId} {
+      // Residents can read visitors for their household
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        isGuard() ||
+        (isResident() && belongsToUserHousehold(resource.data.hostHouseholdId))
+      );
+      
+      // Residents can create visitors for their household
+      allow create: if isAuthenticated() && 
+                      isResident() &&
+                      belongsToUserHousehold(request.resource.data.hostHouseholdId) &&
+                      request.resource.data.status == 'pending' &&
+                      request.resource.data.createdBy == request.auth.uid;
+      
+      // Residents can approve/deny visitors for their household
+      // Guards can check in/out approved visitors
+      // Admins can do anything
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (isResident() && 
+         belongsToUserHousehold(resource.data.hostHouseholdId) &&
+         resource.data.status == 'pending' &&
+         request.resource.data.status in ['approved', 'denied']) ||
+        (isGuard() &&
+         resource.data.status in ['approved', 'checked_in'] &&
+         request.resource.data.status in ['checked_in', 'checked_out'])
+      );
+      
+      // Only admins can delete visitors
+      allow delete: if isAdmin();
+    }
+    
+    // Events collection (audit log)
+    match /events/{eventId} {
+      // Events are append-only
+      allow create: if isAuthenticated();
+      
+      // Admins and guards can read all events
+      allow read: if isAdmin() || isGuard();
+      
+      // Residents can read events where they are the actor
+      allow read: if isAuthenticated() && 
+                    isResident() && 
+                    resource.data.actorUserId == request.auth.uid;
+      
+      // No updates or deletes allowed (immutable audit log)
+      allow update, delete: if false;
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

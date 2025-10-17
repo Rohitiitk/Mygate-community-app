@@ -1,0 +1,272 @@
+{
+  "info": {
+    "name": "MyGate Community API",
+    "description": "API endpoints for MyGate community management system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Visitors",
+      "item": [
+        {
+          "name": "Get All Visitors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visitors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visitors"]
+            }
+          }
+        },
+        {
+          "name": "Create Visitor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ramesh Kumar\",\n  \"phone\": \"+91-9876543210\",\n  \"purpose\": \"Personal Visit\",\n  \"scheduledTime\": \"2024-12-20T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visitors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visitors"]
+            }
+          }
+        },
+        {
+          "name": "Approve Visitor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visitors/:visitorId/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visitors", ":visitorId", "approve"],
+              "variable": [
+                {
+                  "key": "visitorId",
+                  "value": "VISITOR_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deny Visitor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Not expected today\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visitors/:visitorId/deny",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visitors", ":visitorId", "deny"],
+              "variable": [
+                {
+                  "key": "visitorId",
+                  "value": "VISITOR_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check In Visitor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visitors/:visitorId/checkin",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visitors", ":visitorId", "checkin"],
+              "variable": [
+                {
+                  "key": "visitorId",
+                  "value": "VISITOR_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Out Visitor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visitors/:visitorId/checkout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visitors", ":visitorId", "checkout"],
+              "variable": [
+                {
+                  "key": "visitorId",
+                  "value": "VISITOR_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Send Chat Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"approve Ramesh\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Get Audit Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audit"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "type",
+                  "value": "visitor_approved",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Audit Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audit", "stats"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
