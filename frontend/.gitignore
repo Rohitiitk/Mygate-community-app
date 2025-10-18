@@ -28,3 +28,5 @@ dist-ssr
 --- IGNORE ---
 .DS_Store
 .vscode/
+# Ignore Firebase service worker key (if it exists)
+public/firebase-messaging-sw.js
