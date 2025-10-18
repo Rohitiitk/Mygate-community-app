@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../shared/Navbar';
+
+import Broadcast from '../admin/Broadcast';
+import Analytics from '../admin/Analytics';
+import { Megaphone, BarChart3 } from 'lucide-react';
 import VisitorForm from './VisitorForm';
 import VisitorList from './VisitorList';
+import BroadcastView from './BroadcastView';
 import AICopilot from '../chat/AICopilot';
 import AuditLog from '../admin/AuditLog';
 import { Users, MessageSquare, FileText } from 'lucide-react';
@@ -12,11 +17,16 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('visitors');
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const tabs = [
-    { id: 'visitors', label: 'Visitors', icon: Users, roles: ['resident', 'guard', 'admin'] },
-    { id: 'chat', label: 'AI Copilot', icon: MessageSquare, roles: ['resident', 'guard', 'admin'] },
-    { id: 'audit', label: 'Audit Log', icon: FileText, roles: ['admin', 'guard'] }
-  ];
+   const tabs = [
+  { id: 'visitors', label: 'Visitors', icon: Users, roles: ['resident', 'guard', 'admin'] },
+  { id: 'chat', label: 'AI Copilot', icon: MessageSquare, roles: ['resident', 'guard', 'admin'] },
+  { id: 'audit', label: 'Audit Log', icon: FileText, roles: ['admin', 'guard'] },
+  { id: 'broadcast', label: 'Broadcast', icon: Megaphone, roles: ['admin'] },
+  { id: 'analytics', label: 'Analytics', icon: BarChart3, roles: ['admin'] },
+  { id: 'announcements', label: 'Announcements', icon: Megaphone, roles: ['resident', 'guard'] },
+
+];
+
 
   const visibleTabs = tabs.filter(tab => 
     tab.roles.some(role => 
@@ -26,6 +36,8 @@ export default function Dashboard() {
     )
   );
 
+
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -66,6 +78,30 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+
+          {activeTab === 'broadcast' && isAdmin() && (
+  <div>
+    <Broadcast />
+  </div>
+)}
+
+{activeTab === 'analytics' && isAdmin() && (
+  <div>
+    <Analytics />
+  </div>
+)}
+
+{activeTab === 'announcements' && (isResident() || isGuard()) && (
+  <div>
+    <BroadcastView />
+  </div>
+)}
+
+{activeTab === 'broadcast' && isAdmin() && (
+  <div>
+    <Broadcast />
+  </div>
+)}
 
           {activeTab === 'chat' && (
             <div className="max-w-4xl mx-auto">

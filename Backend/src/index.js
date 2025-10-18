@@ -114,6 +114,11 @@ import { readFile } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
+const broadcastModule = await import('./routes/broadcast.js');
+const analyticsModule = await import('./routes/analytics.js');
+const broadcastRouter = broadcastModule.default;
+const analyticsRouter = analyticsModule.default;
+
 // --- Setup Directory ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -128,6 +133,10 @@ const PORT = process.env.PORT || 8080;
 // --- Middleware ---
 app.use(cors());
 app.use(express.json());
+
+// Add routes
+app.use('/api/broadcast', broadcastRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // --- Request Logging ---
 app.use((req, res, next) => {
