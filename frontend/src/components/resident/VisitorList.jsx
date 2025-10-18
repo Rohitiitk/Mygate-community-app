@@ -200,7 +200,7 @@
 //   );
 // }
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { visitorsAPI } from '../../services/api';
@@ -214,18 +214,18 @@ export default function VisitorList() {
   const [filter, setFilter] = useState('all');
   const { isGuard, isAdmin, userClaims } = useAuth();
 
-  // Real-time listener for visitors
+  // 🔒 Avoid notifications on first load
+  const isFirstLoad = useRef(true);
+
   useEffect(() => {
     let unsubscribe = () => {};
 
     const setupRealtimeListener = () => {
       try {
         let q = collection(db, 'visitors');
-
-        // Build query based on user role
         const constraints = [];
 
-        // Residents only see their household's visitors
+        // Residents see only their household visitors
         if (userClaims?.roles?.includes('resident') && !userClaims?.roles?.includes('admin')) {
           if (!userClaims.householdId) {
             console.error('No household ID for resident');
@@ -235,29 +235,24 @@ export default function VisitorList() {
           constraints.push(where('hostHouseholdId', '==', userClaims.householdId));
         }
 
-        // Filter by status
+        // Apply filter if not 'all'
         if (filter !== 'all') {
           constraints.push(where('status', '==', filter));
         }
 
-        // Order and limit
         constraints.push(orderBy('createdAt', 'desc'));
         constraints.push(limit(100));
 
         q = query(collection(db, 'visitors'), ...constraints);
 
-        console.log('Setting up real-time listener for visitors...');
+        console.log('📡 Setting up real-time listener for visitors...');
 
-        // Setup real-time listener
         unsubscribe = onSnapshot(
           q,
           (snapshot) => {
-            console.log(`📡 Received ${snapshot.docs.length} visitors in real-time`);
-            
             const visitorsData = snapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data(),
-              // Convert Firestore timestamps to ISO strings
               createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
               approvedAt: doc.data().approvedAt?.toDate?.()?.toISOString() || doc.data().approvedAt,
               checkedInAt: doc.data().checkedInAt?.toDate?.()?.toISOString() || doc.data().checkedInAt,
@@ -267,31 +262,34 @@ export default function VisitorList() {
             setVisitors(visitorsData);
             setLoading(false);
 
-            // Show toast for status changes (only for non-initial loads)
-            if (!loading) {
-              snapshot.docChanges().forEach((change) => {
-                if (change.type === 'modified') {
-                  const visitor = change.doc.data();
-                  const statusChanged = change.doc.data().status;
-                  
-                  // Show notification based on status
-                  if (statusChanged === 'approved') {
-                    toast.success(`✅ ${visitor.name} was approved`, { duration: 3000 });
-                  } else if (statusChanged === 'denied') {
-                    toast.error(`❌ ${visitor.name} was denied`, { duration: 3000 });
-                  } else if (statusChanged === 'checked_in') {
-                    toast.success(`🚪 ${visitor.name} checked in`, { duration: 3000 });
-                  } else if (statusChanged === 'checked_out') {
-                    toast.success(`👋 ${visitor.name} checked out`, { duration: 3000 });
-                  }
-                }
-                
-                if (change.type === 'added' && !loading) {
-                  const visitor = change.doc.data();
-                  toast(`🚶 New visitor: ${visitor.name}`, { duration: 3000 });
-                }
-              });
+            // ✅ Skip notifications during first load
+            if (isFirstLoad.current) {
+              isFirstLoad.current = false;
+              return;
             }
+
+            // Show notifications only for new changes
+            snapshot.docChanges().forEach((change) => {
+              const visitor = change.doc.data();
+
+              if (change.type === 'modified') {
+                const statusChanged = visitor.status;
+
+                if (statusChanged === 'approved') {
+                  toast.success(`✅ ${visitor.name} was approved`, { duration: 3000 });
+                } else if (statusChanged === 'denied') {
+                  toast.error(`❌ ${visitor.name} was denied`, { duration: 3000 });
+                } else if (statusChanged === 'checked_in') {
+                  toast.success(`🚪 ${visitor.name} checked in`, { duration: 3000 });
+                } else if (statusChanged === 'checked_out') {
+                  toast.success(`👋 ${visitor.name} checked out`, { duration: 3000 });
+                }
+              }
+
+              if (change.type === 'added') {
+                toast(`🚶 New visitor: ${visitor.name}`, { duration: 3000 });
+              }
+            });
           },
           (error) => {
             console.error('Firestore listener error:', error);
@@ -307,17 +305,17 @@ export default function VisitorList() {
 
     setupRealtimeListener();
 
-    // Cleanup listener on unmount
+    // Cleanup listener
     return () => {
-      console.log('Cleaning up visitor listener');
+      console.log('🧹 Cleaning up visitor listener');
       unsubscribe();
     };
-  }, [filter, userClaims, loading]);
+  }, [filter, userClaims]);
 
+  // ======= Action Handlers =======
   const handleApprove = async (visitorId) => {
     try {
       await visitorsAPI.approve(visitorId);
-      // Real-time listener will update the UI automatically
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to approve visitor');
     }
@@ -327,7 +325,6 @@ export default function VisitorList() {
     const reason = prompt('Reason for denial (optional):');
     try {
       await visitorsAPI.deny(visitorId, reason);
-      // Real-time listener will update the UI automatically
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to deny visitor');
     }
@@ -336,7 +333,6 @@ export default function VisitorList() {
   const handleCheckIn = async (visitorId) => {
     try {
       await visitorsAPI.checkIn(visitorId);
-      // Real-time listener will update the UI automatically
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to check in visitor');
     }
@@ -345,12 +341,12 @@ export default function VisitorList() {
   const handleCheckOut = async (visitorId) => {
     try {
       await visitorsAPI.checkOut(visitorId);
-      // Real-time listener will update the UI automatically
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to check out visitor');
     }
   };
 
+  // ======= Helpers =======
   const getStatusBadge = (status) => {
     const styles = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -373,6 +369,7 @@ export default function VisitorList() {
     return icons[status];
   };
 
+  // ======= UI =======
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -401,13 +398,13 @@ export default function VisitorList() {
         ))}
       </div>
 
-      {/* Real-time indicator */}
+      {/* Live indicator */}
       <div className="mb-4 flex items-center gap-2 text-sm text-green-600">
         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
         <span>Live updates enabled</span>
       </div>
 
-      {/* Visitors List */}
+      {/* Visitor cards */}
       {visitors.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-500">No visitors found</p>
