@@ -288,7 +288,7 @@ export default function VisitorList() {
                 
                 if (change.type === 'added' && !loading) {
                   const visitor = change.doc.data();
-                  toast.info(`🚶 New visitor: ${visitor.name}`, { duration: 3000 });
+                  toast(`🚶 New visitor: ${visitor.name}`, { duration: 3000 });
                 }
               });
             }

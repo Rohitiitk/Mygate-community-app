@@ -195,6 +195,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LogOut, Shield, Bell, BellOff, User } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 import { getNotificationPermission, requestNotificationPermission } from '../../services/fcm';
 
 export default function Navbar() {
@@ -202,6 +204,25 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   const [notificationEnabled, setNotificationEnabled] = useState(false);
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+  // Listen for new broadcasts in last 24 hours
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const q = query(
+    collection(db, 'broadcasts'),
+    where('createdAt', '>=', yesterday)
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    setUnreadCount(snapshot.docs.length);
+  });
+
+  return () => unsubscribe();
+}, []);
 
   // ✅ Check notification permission on mount
   useEffect(() => {
@@ -287,8 +308,12 @@ export default function Navbar() {
             >
               {notificationEnabled ? (
                 <>
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <Bell className="w-5 h-5 text-gray-600" />
+  {unreadCount > 0 && (
+    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+      {unreadCount > 9 ? '9+' : unreadCount}
+    </span>
+  )}
                 </>
               ) : (
                 <BellOff className="w-5 h-5" />
