@@ -4,9 +4,11 @@ A full-stack community management application where residents pre-authorize visi
 
 ## 🎥 Demo
 
-**Live URL:** [Your deployed URL here]
+**Live URL:** [not live yet]
 
 **Health Endpoint:** `https://your-api-url.run.app/health`
+
+**Demo:** 'https://drive.google.com/file/d/15SO8cO9fsJGlxkIAuswEfpnpOikULQYi/view?usp=sharing'
 
 ## 📐 90-Second Architecture
 
@@ -23,7 +25,7 @@ A full-stack community management application where residents pre-authorize visi
 │              BACKEND API (Cloud Run / Node.js)              │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐│
 │  │ Auth         │  │ Visitors     │  │ AI Chat           ││
-│  │ Middleware   │  │ Management   │  │ (OpenAI GPT-4o)   ││
+│  │ Middleware   │  │ Management   │  │ (llama3.2:3b)   ││
 │  └──────────────┘  └──────────────┘  └───────────────────┘│
 └─────────────────────────┬───────────────────────────────────┘
                           │
@@ -93,7 +95,7 @@ The AI Copilot uses OpenAI GPT-4o-mini with function calling and structured outp
 - Node.js 18+
 - Firebase project
 - Google Cloud project (auto-created with Firebase)
-- OpenAI API key
+- ollama
 
 ### 1. Firebase Setup
 
@@ -113,7 +115,7 @@ firebase login
 ### 2. Clone & Install
 
 ```bash
-git clone <your-repo-url>
+git clone <https://github.com/Rohitiitk/Mygate-community-app>
 cd mygate-community-app
 
 # Backend
