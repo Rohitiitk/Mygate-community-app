@@ -6,8 +6,6 @@ A full-stack community management application where residents pre-authorize visi
 
 **Live URL:** [not live yet]
 
-**Health Endpoint:** `https://your-api-url.run.app/health`
-
 **Demo:** 'https://drive.google.com/file/d/15SO8cO9fsJGlxkIAuswEfpnpOikULQYi/view?usp=sharing'
 
 ## 📐 90-Second Architecture
